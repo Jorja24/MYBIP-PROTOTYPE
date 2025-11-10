@@ -1,11 +1,16 @@
-
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 import { KNOWLEDGE_BASE, getSystemInstruction } from '../constants';
 import { Language } from '../types';
 
-export const createChatSession = (language: Language): Chat => {
+export const createChatSession = (language: Language): Chat | null => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error("API key is not available.");
+    return null;
+  }
+  
   // Initialize the GoogleGenAI instance with the API key from environment variables
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   const chat = ai.chats.create({
     model: 'gemini-2.5-flash',

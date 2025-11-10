@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   define: {
     // Expose the API_KEY from the build environment (e.g., Vercel) to the client code.
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
+    // Provide an empty string fallback to prevent crashes if the variable is not set.
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || '')
   }
 });

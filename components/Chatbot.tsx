@@ -29,16 +29,11 @@ const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any
 const isSpeechSupported = !!SpeechRecognitionAPI;
 
 const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'initial',
-      text: 'Hello! I am the MyBIP Assistant. How can I help you today?',
-      sender: 'bot',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(Language.ENGLISH);
+  const [error, setError] = useState<string | null>(null);
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -53,9 +48,26 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    chatSessionRef.current = createChatSession(selectedLanguage);
-    const greeting = getGreeting(selectedLanguage);
-    setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
+    setIsLoading(true);
+    setError(null); // Reset error state on language change
+
+    try {
+        const session = createChatSession(selectedLanguage);
+        if (session) {
+            chatSessionRef.current = session;
+            const greeting = getGreeting(selectedLanguage);
+            setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
+        } else {
+            // This case handles the missing API key gracefully.
+            setError('The API key is missing. Please ask the administrator to configure it.');
+        }
+    } catch (e) {
+        console.error("Error initializing chat session:", e);
+        // This will catch any other errors from the SDK, e.g., invalid key format.
+        setError("Could not start the chat session. The API key might be invalid.");
+    } finally {
+        setIsLoading(false);
+    }
   }, [selectedLanguage]);
 
   useEffect(() => {
@@ -125,7 +137,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() === '' || isLoading) return;
+    if (inputValue.trim() === '' || isLoading || error) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -191,6 +203,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
             value={selectedLanguage}
             onChange={(e) => setSelectedLanguage(e.target.value as Language)}
             className="w-full p-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled={!!error}
           >
             {Object.values(Language).map((lang) => (
               <option key={lang} value={lang}>{lang}</option>
@@ -199,34 +212,46 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-        {messages.map((message) => (
-          <div key={message.id} className={`flex flex-col mb-4 ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
-            <div className={`rounded-2xl py-2.5 px-4 max-w-xs md:max-w-md lg:max-w-lg shadow-sm ${message.sender === 'user' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-200'}`}>
-              <p className="whitespace-pre-wrap">{message.text}</p>
-              {message.guidedStep && (
-                  <GuidedSteps title={message.guidedStep.title} steps={message.guidedStep.steps} />
-              )}
-            </div>
-             {message.sources && message.sources.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-xs text-gray-500">Sources:</span>
-                {message.sources.map((source, i) => (
-                  <span key={i} className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{source.name}</span>
-                ))}
-              </div>
-            )}
+        {error ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-gray-600">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-gray-800">Oops, something went wrong.</h3>
+            <p className="text-sm">{error}</p>
           </div>
-        ))}
-         {isLoading && (
-            <div className="flex justify-start mb-4">
-              <div className="bg-white border border-gray-200 text-gray-800 rounded-2xl py-2 px-4 rounded-bl-none flex items-center space-x-2 shadow-sm">
-                 <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                 <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                 <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+        ) : (
+          <>
+            {messages.map((message) => (
+              <div key={message.id} className={`flex flex-col mb-4 ${message.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`rounded-2xl py-2.5 px-4 max-w-xs md:max-w-md lg:max-w-lg shadow-sm ${message.sender === 'user' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-200'}`}>
+                  <p className="whitespace-pre-wrap">{message.text}</p>
+                  {message.guidedStep && (
+                      <GuidedSteps title={message.guidedStep.title} steps={message.guidedStep.steps} />
+                  )}
+                </div>
+                 {message.sources && message.sources.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs text-gray-500">Sources:</span>
+                    {message.sources.map((source, i) => (
+                      <span key={i} className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">{source.name}</span>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
+             {isLoading && (
+                <div className="flex justify-start mb-4">
+                  <div className="bg-white border border-gray-200 text-gray-800 rounded-2xl py-2 px-4 rounded-bl-none flex items-center space-x-2 shadow-sm">
+                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+                  </div>
+                </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSendMessage} className="p-4 border-t bg-white rounded-b-xl flex items-center space-x-2">
@@ -236,14 +261,14 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
           onChange={(e) => setInputValue(e.target.value)}
           placeholder={isRecording ? "Listening..." : "Type your question..."}
           className="flex-1 p-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          disabled={isLoading || isRecording}
+          disabled={isLoading || isRecording || !!error}
         />
         {isSpeechSupported && (
             <button
                 type="button"
                 onClick={handleMicClick}
                 className={`p-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
-                disabled={isLoading}
+                disabled={isLoading || !!error}
                 aria-label={isRecording ? 'Stop recording' : 'Start recording'}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -251,7 +276,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
                 </svg>
             </button>
         )}
-        <button type="submit" className="bg-gray-800 text-white p-3 rounded-full hover:bg-gray-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800" disabled={isLoading || !inputValue.trim() || isRecording}>
+        <button type="submit" className="bg-gray-800 text-white p-3 rounded-full hover:bg-gray-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800" disabled={isLoading || !inputValue.trim() || isRecording || !!error}>
            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
