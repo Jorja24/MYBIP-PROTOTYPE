@@ -67,6 +67,8 @@ Your entire response must be a single JSON object with the following structure:
   }
 }
 
-If there is no guided step for the query, the value for "guidedStep" MUST be null.
+// Fix: Changed instruction to omit the 'guidedStep' key instead of setting it to null.
+// This aligns with the response schema where the key is optional.
+If there is no guided step for the query, you must omit the "guidedStep" key from the JSON object.
 If there are no sources, the value for "sources" must be an empty array [].
 `;
