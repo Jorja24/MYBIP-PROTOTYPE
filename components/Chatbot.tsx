@@ -64,7 +64,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
     } catch (e) {
         console.error("Error initializing chat session:", e);
         // This will catch any other errors from the SDK, e.g., invalid key format.
-        setError("Could not start the chat session. The API key might be invalid.");
+        setError("The configured API key appears to be invalid. Please ask the administrator to verify it.");
     } finally {
         setIsLoading(false);
     }

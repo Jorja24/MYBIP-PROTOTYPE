@@ -3,14 +3,14 @@ import { KNOWLEDGE_BASE, getSystemInstruction } from '../constants';
 import { Language } from '../types';
 
 export const createChatSession = (language: Language): Chat | null => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.error("API key is not available.");
+  // Fix: Per Gemini API guidelines, the API key must be sourced from process.env.API_KEY.
+  if (!process.env.API_KEY) {
+    console.error("API key (API_KEY) is not available in the environment.");
     return null;
   }
   
   // Initialize the GoogleGenAI instance with the API key from environment variables
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const chat = ai.chats.create({
     model: 'gemini-2.5-flash',
