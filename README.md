@@ -5,9 +5,11 @@ Welcome! This is a live prototype of the MyBIP AI Assistant, designed to support
 
 ## How It Works
 
-This application connects to the Google Gemini API to power its AI assistant. The API key is managed securely as an environment variable named `API_KEY` in the deployment environment (like Vercel or a similar hosting platform).
+This application connects to the Google Gemini API to power its AI assistant.
 
-There is no need to enter an API key in the browser. The application is configured to use the pre-set key from the environment, making it ready to use immediately upon loading.
+**IMPORTANT:** The API key must be managed securely as an environment variable named `VITE_API_KEY` in the deployment environment (like Vercel or a similar hosting platform).
+
+There is no need to enter an API key in the browser. The application is configured to use the pre-set key from the environment, making it ready to use immediately upon loading, provided the `VITE_API_KEY` variable is correctly set.
 
 ### Key Features
 

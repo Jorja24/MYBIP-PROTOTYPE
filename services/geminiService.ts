@@ -3,14 +3,17 @@ import { KNOWLEDGE_BASE, getSystemInstruction } from '../constants';
 import { Language } from '../types';
 
 export const createChatSession = (language: Language): Chat | null => {
-  // Fix: Per Gemini API guidelines, the API key must be sourced from process.env.API_KEY.
-  if (!process.env.API_KEY) {
-    console.error("API key (API_KEY) is not available in the environment.");
+  // Per Vite's standard, client-side environment variables must be prefixed
+  // with VITE_ and accessed via import.meta.env.
+  const apiKey = import.meta.env.VITE_API_KEY;
+
+  if (!apiKey) {
+    console.error("API key (VITE_API_KEY) is not available in the environment.");
     return null;
   }
   
   // Initialize the GoogleGenAI instance with the API key from environment variables
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   const chat = ai.chats.create({
     model: 'gemini-2.5-flash',
