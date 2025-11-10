@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://<YOUR_USERNAME>.github.io/<YOUR_REPOSITORY_NAME>",
+  "homepage": "https://Jorja24.github.io/MYBIP-PROTOTYPE",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
