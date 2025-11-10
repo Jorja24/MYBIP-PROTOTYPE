@@ -1,15 +1,32 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Chatbot from './components/Chatbot';
 import ChatIcon from './components/ChatIcon';
 import UserManual from './components/UserManual';
+import ApiKeyModal from './components/ApiKeyModal';
 
 const App: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for API key in session storage when the app loads
+    const storedApiKey = sessionStorage.getItem('gemini-api-key');
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+  }, []);
+
+  const handleSaveApiKey = (key: string) => {
+    sessionStorage.setItem('gemini-api-key', key);
+    setApiKey(key);
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen font-sans antialiased relative">
+      {!apiKey && <ApiKeyModal onSave={handleSaveApiKey} />}
+      
       <header className="bg-white shadow-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
@@ -47,8 +64,8 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <ChatIcon onClick={() => setIsChatOpen(true)} />
-      {isChatOpen && <Chatbot onClose={() => setIsChatOpen(false)} />}
+      <ChatIcon onClick={() => setIsChatOpen(true)} disabled={!apiKey} />
+      {isChatOpen && apiKey && <Chatbot onClose={() => setIsChatOpen(false)} apiKey={apiKey} />}
       {isManualOpen && <UserManual onClose={() => setIsManualOpen(false)} />}
     </div>
   );

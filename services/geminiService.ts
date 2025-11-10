@@ -1,20 +1,16 @@
+
 import { GoogleGenAI, Chat, Type } from "@google/genai";
 import { KNOWLEDGE_BASE, getSystemInstruction } from '../constants';
 import { Language } from '../types';
 
-// Fix: Adhere to Gemini API guidelines for API key management.
-// This resolves the TypeScript error on line 6 by replacing `import.meta.env`
-// with `process.env.API_KEY` and removes the warning about setting the key.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+export const createChatSession = (apiKey: string, language: Language): Chat => {
+  // Initialize the GoogleGenAI instance with the user-provided key
+  const ai = new GoogleGenAI({ apiKey });
 
-export const createChatSession = (language: Language): Chat => {
   const chat = ai.chats.create({
     model: 'gemini-2.5-flash',
     config: {
-        // The instruction is now much more detailed.
         systemInstruction: getSystemInstruction(language),
-        // Fix: Improve reliability of JSON output by using responseSchema and responseMimeType
-        // as recommended by the Gemini API guidelines, instead of relying solely on prompt instructions.
         responseMimeType: "application/json",
         responseSchema: {
             type: Type.OBJECT,
@@ -47,7 +43,6 @@ export const createChatSession = (language: Language): Chat => {
             required: ["answer", "sources"],
         },
     },
-    // The history provides the context for the model.
     history: [
         {
             role: 'user',

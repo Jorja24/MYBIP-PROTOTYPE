@@ -3,13 +3,15 @@ import React from 'react';
 
 interface ChatIconProps {
   onClick: () => void;
+  disabled?: boolean;
 }
 
-const ChatIcon: React.FC<ChatIconProps> = ({ onClick }) => {
+const ChatIcon: React.FC<ChatIconProps> = ({ onClick, disabled }) => {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-6 right-6 bg-gray-800 text-white p-4 rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-transform transform hover:scale-110"
+      disabled={disabled}
+      className="fixed bottom-6 right-6 bg-gray-800 text-white p-4 rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-all transform hover:scale-110 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:scale-100"
       aria-label="Open chat"
     >
       <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">

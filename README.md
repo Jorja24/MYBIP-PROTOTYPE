@@ -1,93 +1,34 @@
 
-# MyBIP AI Chatbot: A Beginner's Guide to Going Live
+# MyBIP AI Chatbot Prototype
 
-Welcome! This guide will walk you through putting your MyBIP AI Assistant prototype on the live internet, so anyone with the link can see it. We'll use a free service from GitHub called **GitHub Pages**.
+Welcome! This is a live prototype of the MyBIP AI Assistant, designed to support informal business owners in South Africa.
 
-### The Big Picture (In Simple Terms)
+## How It Works (A New, Simpler Way)
 
-1.  **Your Code:** Lives on your computer.
-2.  **GitHub (`github.com/Jorja24/MYBIP-PROTOTYPE`):** This is like a public library for your code.
-3.  **The "Deploy" Command (`npm run deploy`):** This is a magic command you'll run on your computer. It builds a neat, professional version of your website and sends it to your GitHub library.
-4.  **GitHub Pages:** This is the free service that takes the website from your library and puts it on the internet for everyone to see.
+This application is now much easier to run and deploy. We have removed the complex requirement for environment variables during the build process.
 
-The process has two main parts: a **one-time setup** to get everything connected, and then the **easy "deploy" command** for any future updates.
+Instead, the application will simply ask you for your API key when you first open it.
 
----
+### Step 1: Get a Gemini API Key
 
-## ✅ Part 1: The One-Time Setup
+You need a Google Gemini API key to power the AI assistant. You can get one for free from Google AI Studio.
 
-Let's get everything ready. You only have to do this part once!
+➡️ **[Click here to get your API Key](https://ai.google.dev/)**
 
-### Step 1: Open Your Project's Command Line (Terminal)
+### Step 2: Run the Application
 
-First, you need to open a command line that is "inside" your project folder. The easiest way to do this is to open your project in your code editor (like VS Code) and then open its built-in terminal.
+When you launch the app for the first time, a pop-up window will appear asking for your API key.
 
-*(In VS Code: Go to the top menu and click `Terminal` -> `New Terminal`)*
+1.  **Paste** the key you got from Google AI Studio into the input field.
+2.  Click **"Save & Start"**.
 
-### Step 2: Install the Building Blocks
+That's it! The key will be securely saved for your current browser session, and the chatbot will be fully activated.
 
-Your project relies on tools like React and Vite to work. You need to download them into your project.
+### Security
 
-➡️ In your terminal, run this command:
-```bash
-npm install
-```
-**What this does:** It reads the `package.json` file and downloads all the necessary code "building blocks" into a new `node_modules` folder. You won't need to do this again unless you add new tools later.
+Your API key is stored only in your browser's `sessionStorage`. This means:
+*   It is **never** sent to any server other than Google's.
+*   It is **deleted automatically** when you close the browser tab.
+*   It is **not** saved in the code or on any permanent storage.
 
-### Step 3: Send Your Website to GitHub for the First Time
-
-Now we'll run the magic "deploy" command. This prepares your website and sends it to a special place on GitHub.
-
-➡️ In your terminal, run this command:
-```bash
-npm run deploy
-```
-**What this does:**
-1.  It builds a special, optimized version of your website in a folder named `dist`.
-2.  It automatically creates a new, separate branch on your GitHub repository called `gh-pages` and pushes only the contents of that `dist` folder to it.
-
-> **Wait for this command to finish completely before moving to the next step.**
-
-### Step 4: Configure the GitHub Website
-
-This is the final setup step! You need to tell GitHub to turn that `gh-pages` branch into a live website.
-
-1.  **Go to your repository settings:** Open your web browser and go to `https://github.com/Jorja24/MYBIP-PROTOTYPE/settings`
-2.  **Go to the "Pages" section:** On the left-hand menu, click on **Pages**.
-    
-3.  **Set the Source Branch:**
-    *   Under "Build and deployment", for the **Source**, choose **Deploy from a branch**.
-    *   A new dropdown will appear. In the branch dropdown, select **`gh-pages`**.
-    *   Leave the folder as `/ (root)`.
-    *   Click the **Save** button.
-    
-
----
-
-## 🚀 Part 2: You're Live!
-
-**Congratulations!** You've done all the hard work.
-
-GitHub will now take a minute or two to publish your site. You can watch the progress on that same "Pages" settings screen. When it's ready, it will show a green message with your public URL.
-
-Your live website link is: **https://Jorja24.github.io/MYBIP-PROTOTYPE**
-
----
-
-## 🔄 How to Update Your Live Website in the Future
-
-Now that the setup is done, updating your site is incredibly simple.
-
-1.  Make any changes you want to your code (`App.tsx`, etc.) and save the files.
-2.  Save your changes to GitHub (you can use the command line or a desktop app).
-    ```bash
-    git add .
-    git commit -m "Made some new updates"
-    git push
-    ```
-3.  Run the deploy command again.
-    ```bash
-    npm run deploy
-    ```
-
-That's it! Your changes will appear on the live website after a minute or two. You've now got your "one-click deploy button."
+This approach is secure and makes testing and deployment incredibly simple.

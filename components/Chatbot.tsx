@@ -8,9 +8,10 @@ import GuidedSteps from './GuidedSteps';
 
 interface ChatbotProps {
   onClose: () => void;
+  apiKey: string;
 }
 
-const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
+const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'initial',
@@ -24,6 +25,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     // Animate the component in
@@ -32,10 +35,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    chatSessionRef.current = createChatSession(selectedLanguage);
-    const greeting = getGreeting(selectedLanguage);
-    setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
-  }, [selectedLanguage]);
+    if (apiKey) {
+      chatSessionRef.current = createChatSession(apiKey, selectedLanguage);
+      const greeting = getGreeting(selectedLanguage);
+      setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
+      setError(null);
+    } else {
+      setError("API Key not provided. Please configure your API Key.");
+    }
+  }, [selectedLanguage, apiKey]);
 
   const getGreeting = (lang: Language): string => {
     switch (lang) {
@@ -60,7 +68,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() === '' || isLoading) return;
+    if (inputValue.trim() === '' || isLoading || !apiKey) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -78,7 +86,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
         }
       const response = await chatSessionRef.current.sendMessage({ message: userMessage.text });
       
-      const cleanedText = response.text.replace(/```json|```/g, '').trim();
+      const responseText = response.text;
+      if (!responseText) {
+        throw new Error("Received an empty response from the AI. The API key might be invalid or there could be a network issue.");
+      }
+
+      const cleanedText = responseText.replace(/```json|```/g, '').trim();
       const parsedResponse = JSON.parse(cleanedText);
 
       const botMessage: Message = {
@@ -93,7 +106,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
       console.error('Error sending message to Gemini or parsing response:', error);
       const errorMessage: Message = {
         id: Date.now().toString() + 'e',
-        text: 'Sorry, I encountered an error processing your request. Please try rephrasing your question.',
+        text: 'Sorry, I encountered an error processing your request. Please try rephrasing your question or check if your API Key is valid.',
         sender: 'bot',
       };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
@@ -164,11 +177,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type your question..."
-          className="flex-1 p-3 border border-gray-200 rounded-l-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled={isLoading}
+          placeholder={error || "Type your question..."}
+          className="flex-1 p-3 border border-gray-200 rounded-l-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          disabled={isLoading || !!error}
         />
-        <button type="submit" className="bg-gray-800 text-white p-3 rounded-r-full hover:bg-gray-700 disabled:bg-gray-400 transition-colors" disabled={isLoading || !inputValue.trim()}>
+        <button type="submit" className="bg-gray-800 text-white p-3 rounded-r-full hover:bg-gray-700 disabled:bg-gray-400 transition-colors" disabled={isLoading || !inputValue.trim() || !!error}>
            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
