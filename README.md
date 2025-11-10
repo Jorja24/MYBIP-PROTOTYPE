@@ -3,32 +3,16 @@
 
 Welcome! This is a live prototype of the MyBIP AI Assistant, designed to support informal business owners in South Africa.
 
-## How It Works (A New, Simpler Way)
+## How It Works
 
-This application is now much easier to run and deploy. We have removed the complex requirement for environment variables during the build process.
+This application connects to the Google Gemini API to power its AI assistant. The API key is managed securely as an environment variable in the deployment environment (like Vercel or a similar hosting platform).
 
-Instead, the application will simply ask you for your API key when you first open it.
+There is no need to enter an API key in the browser. The application is configured to use a pre-set key, making it ready to use immediately upon loading.
 
-### Step 1: Get a Gemini API Key
+### Key Features
 
-You need a Google Gemini API key to power the AI assistant. You can get one for free from Google AI Studio.
-
-➡️ **[Click here to get your API Key](https://ai.google.dev/)**
-
-### Step 2: Run the Application
-
-When you launch the app for the first time, a pop-up window will appear asking for your API key.
-
-1.  **Paste** the key you got from Google AI Studio into the input field.
-2.  Click **"Save & Start"**.
-
-That's it! The key will be securely saved for your current browser session, and the chatbot will be fully activated.
-
-### Security
-
-Your API key is stored only in your browser's `sessionStorage`. This means:
-*   It is **never** sent to any server other than Google's.
-*   It is **deleted automatically** when you close the browser tab.
-*   It is **not** saved in the code or on any permanent storage.
-
-This approach is secure and makes testing and deployment incredibly simple.
+- **Knowledge-Based Answers**: The AI provides answers based on a built-in knowledge base about South African informal businesses.
+- **Source Citing**: The AI cites its sources for transparency.
+- **Multilingual Support**: The chat can be switched between English, Zulu, Xhosa, and Afrikaans.
+- **Guided Steps**: For complex processes, the AI provides easy-to-follow step-by-step guides.
+- **Safe & Secure**: The AI is "sandboxed" and cannot access outside information, ensuring all responses are from the approved knowledge base.

@@ -1,5 +1,7 @@
 {
   "name": "MyBIP AI Chatbot Assistant",
   "description": "An AI-powered chatbot to assist informal business owners using the MyBIP application, providing guidance and answering questions based on the app's internal knowledge base.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import type { Message } from '../types';
 import { Language } from '../types';
@@ -8,10 +7,28 @@ import GuidedSteps from './GuidedSteps';
 
 interface ChatbotProps {
   onClose: () => void;
-  apiKey: string;
 }
 
-const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
+const selectedLanguageToLocale = (lang: Language): string => {
+    switch (lang) {
+      case Language.ZULU:
+        return 'zu-ZA';
+      case Language.XHOSA:
+        return 'xh-ZA';
+      case Language.AFRIKAANS:
+        return 'af-ZA';
+      default:
+        return 'en-US';
+    }
+};
+
+// Fix for SpeechRecognition errors.
+// 1. Cast `window` to `any` to access browser-specific APIs (`SpeechRecognition`, `webkitSpeechRecognition`) without TypeScript errors.
+// 2. Rename the `SpeechRecognition` constant to `SpeechRecognitionAPI` to avoid shadowing the global `SpeechRecognition` type interface.
+const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+const isSpeechSupported = !!SpeechRecognitionAPI;
+
+const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'initial',
@@ -25,8 +42,9 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  const [isRecording, setIsRecording] = useState(false);
+  // Fix for "Cannot find name 'SpeechRecognition'". The type is not available in the current TypeScript configuration, so using 'any'.
+  const recognitionRef = useRef<any | null>(null);
 
   useEffect(() => {
     // Animate the component in
@@ -35,15 +53,42 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
   }, []);
 
   useEffect(() => {
-    if (apiKey) {
-      chatSessionRef.current = createChatSession(apiKey, selectedLanguage);
-      const greeting = getGreeting(selectedLanguage);
-      setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
-      setError(null);
-    } else {
-      setError("API Key not provided. Please configure your API Key.");
+    chatSessionRef.current = createChatSession(selectedLanguage);
+    const greeting = getGreeting(selectedLanguage);
+    setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
+  }, [selectedLanguage]);
+
+  useEffect(() => {
+    if (!isSpeechSupported) {
+      console.warn("Speech recognition is not supported in this browser.");
+      return;
     }
-  }, [selectedLanguage, apiKey]);
+
+    // Fix: Use the renamed `SpeechRecognitionAPI` constant to create a new instance.
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = selectedLanguageToLocale(selectedLanguage);
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+      setInputValue(transcript);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+  }, [selectedLanguage]);
 
   const getGreeting = (lang: Language): string => {
     switch (lang) {
@@ -66,9 +111,21 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  const handleMicClick = () => {
+    if (!recognitionRef.current) return;
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      setInputValue('');
+      recognitionRef.current.start();
+      setIsRecording(true);
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() === '' || isLoading || !apiKey) return;
+    if (inputValue.trim() === '' || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -106,7 +163,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
       console.error('Error sending message to Gemini or parsing response:', error);
       const errorMessage: Message = {
         id: Date.now().toString() + 'e',
-        text: 'Sorry, I encountered an error processing your request. Please try rephrasing your question or check if your API Key is valid.',
+        text: 'Sorry, I encountered an error processing your request. Please try again later or rephrase your question.',
         sender: 'bot',
       };
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
@@ -116,7 +173,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
   };
 
   return (
-    <div className={`fixed bottom-20 right-6 w-full max-w-md h-[70vh] max-h-[600px] bg-white rounded-xl shadow-2xl flex flex-col z-50 transition-all duration-300 ease-out ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+    <div className={`fixed bottom-28 right-4 left-4 sm:left-auto sm:right-6 sm:w-full sm:max-w-md h-[70vh] max-h-[600px] bg-white rounded-xl shadow-2xl flex flex-col z-50 transition-all duration-300 ease-out ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
       <header className="bg-gradient-to-br from-gray-800 to-gray-900 text-white p-4 flex justify-between items-center rounded-t-xl">
         <div>
           <h2 className="text-xl font-bold">MyBIP Assistant</h2>
@@ -172,16 +229,29 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, apiKey }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSendMessage} className="p-4 border-t bg-white rounded-b-xl flex items-center">
+      <form onSubmit={handleSendMessage} className="p-4 border-t bg-white rounded-b-xl flex items-center space-x-2">
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder={error || "Type your question..."}
-          className="flex-1 p-3 border border-gray-200 rounded-l-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-          disabled={isLoading || !!error}
+          placeholder={isRecording ? "Listening..." : "Type your question..."}
+          className="flex-1 p-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          disabled={isLoading || isRecording}
         />
-        <button type="submit" className="bg-gray-800 text-white p-3 rounded-r-full hover:bg-gray-700 disabled:bg-gray-400 transition-colors" disabled={isLoading || !inputValue.trim() || !!error}>
+        {isSpeechSupported && (
+            <button
+                type="button"
+                onClick={handleMicClick}
+                className={`p-3 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                disabled={isLoading}
+                aria-label={isRecording ? 'Stop recording' : 'Start recording'}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+            </button>
+        )}
+        <button type="submit" className="bg-gray-800 text-white p-3 rounded-full hover:bg-gray-700 disabled:bg-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800" disabled={isLoading || !inputValue.trim() || isRecording}>
            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
