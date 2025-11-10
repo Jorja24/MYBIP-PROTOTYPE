@@ -3,12 +3,12 @@ import { KNOWLEDGE_BASE, getSystemInstruction } from '../constants';
 import { Language } from '../types';
 
 export const createChatSession = (language: Language): Chat | null => {
-  // Per Vite's standard, client-side environment variables must be prefixed
-  // with VITE_ and accessed via import.meta.env.
-  const apiKey = import.meta.env.VITE_API_KEY;
+  // FIX: Per Gemini API guidelines, the API key must be sourced from process.env.API_KEY.
+  // This resolves the TypeScript error for 'import.meta.env' by avoiding its use.
+  const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
-    console.error("API key (VITE_API_KEY) is not available in the environment.");
+    console.error("API key (API_KEY) is not available in the environment.");
     return null;
   }
   

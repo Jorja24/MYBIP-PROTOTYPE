@@ -59,12 +59,14 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
             setMessages([{ id: 'initial', text: greeting, sender: 'bot' }]);
         } else {
             // This case handles the missing API key gracefully.
-            setError('The API key is missing. Please ask the administrator to configure the VITE_API_KEY environment variable.');
+            // FIX: Updated error message to refer to API_KEY, aligning with changes in geminiService.
+            setError('The API key is missing. Please ask the administrator to configure the API_KEY environment variable.');
         }
     } catch (e) {
         console.error("Error initializing chat session:", e);
         // This will catch any other errors from the SDK, e.g., invalid key format.
-        setError("The configured API key (VITE_API_KEY) appears to be invalid. Please ask the administrator to verify it.");
+        // FIX: Updated error message to refer to API_KEY, aligning with changes in geminiService.
+        setError("The configured API key (API_KEY) appears to be invalid. Please ask the administrator to verify it.");
     } finally {
         setIsLoading(false);
     }
